@@ -3,11 +3,19 @@ import type { AppConfig, CalendarEvent, SectionResult } from "../types.js";
 
 function parseEvents(json: string): CalendarEvent[] {
   const raw: unknown = JSON.parse(json);
-  const items = Array.isArray(raw) ? raw : [];
+  const items: unknown[] = Array.isArray(raw)
+    ? raw
+    : Array.isArray((raw as Record<string, unknown>)?.events)
+      ? ((raw as Record<string, unknown>).events as unknown[])
+      : [];
 
-  return items.map((item: Record<string, unknown>) => {
-    const startLocal = String(item.startLocal ?? "");
-    const endLocal = String(item.endLocal ?? "");
+  return items.map((raw) => {
+    const item = raw as Record<string, unknown>;
+    const startObj = item.start as Record<string, string> | undefined;
+    const endObj = item.end as Record<string, string> | undefined;
+
+    const startLocal = startObj?.dateTime ?? startObj?.date ?? "";
+    const endLocal = endObj?.dateTime ?? endObj?.date ?? "";
     // All-day events have date-only strings (no "T" separator)
     const isAllDay = startLocal.length > 0 && !startLocal.includes("T");
 
