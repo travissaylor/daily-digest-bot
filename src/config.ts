@@ -5,7 +5,7 @@ export function loadConfig(): AppConfig {
   const required = [
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_CHAT_ID",
-    "CLAUDE_API_KEY",
+    "Z_AI_API_KEY",
     "NWS_LATITUDE",
     "NWS_LONGITUDE",
   ] as const;
@@ -21,7 +21,7 @@ export function loadConfig(): AppConfig {
   return {
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN!,
     telegramChatId: process.env.TELEGRAM_CHAT_ID!,
-    claudeApiKey: process.env.CLAUDE_API_KEY!,
+    zAiApiKey: process.env.Z_AI_API_KEY!,
     nwsLatitude: process.env.NWS_LATITUDE!,
     nwsLongitude: process.env.NWS_LONGITUDE!,
   };
