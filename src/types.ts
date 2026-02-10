@@ -30,3 +30,18 @@ export interface AppConfig {
   nwsLatitude: string;
   nwsLongitude: string;
 }
+
+// z.ai web search response types
+export interface ZAiWebSearchResult {
+  title: string;
+  link: string;
+  media: string;
+  content: string;
+  refer: string;
+  publish_date?: string;
+}
+
+export interface ZAiWebSearchResponse {
+  choices: Array<{ message: { content: string } }>;
+  web_search?: ZAiWebSearchResult[];
+}

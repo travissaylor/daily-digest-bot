@@ -52,7 +52,7 @@ A daily digest bot that compiles a personalized morning briefing and delivers it
 **Description:** As a user, I want 3 AI news items so that I stay informed about developments in AI tooling and the broader AI landscape.
 
 **Acceptance Criteria:**
-- [ ] Uses Claude API (via z.ai) with web search/tool use to find 3 current AI news items, prioritizing AI tooling
+- [ ] Uses z.ai api with web search/tool use to find 3 current AI news items, prioritizing AI tooling
 - [ ] Each item includes: a bold headline, 2–3 sentence summary covering what happened and why it matters, and a source link
 - [ ] News items are from the current day or very recent (within last 24–48 hours)
 - [ ] Items are diverse (not all from the same source or about the same topic)
