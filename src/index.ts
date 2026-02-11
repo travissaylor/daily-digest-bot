@@ -9,6 +9,7 @@ import {
 import { formatDigest, sendTelegramMessage } from "./telegram.js";
 
 async function main(): Promise<void> {
+  const startTime = Date.now();
   console.log(`[${new Date().toISOString()}] Starting daily digest...`);
 
   const config = loadConfig();
@@ -24,7 +25,8 @@ async function main(): Promise<void> {
   const digest = formatDigest(sections);
   await sendTelegramMessage(config, digest);
 
-  console.log(`[${new Date().toISOString()}] Daily digest complete.`);
+  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`[${new Date().toISOString()}] Daily digest complete in ${elapsed}s.`);
 }
 
 main().catch((error: unknown) => {
