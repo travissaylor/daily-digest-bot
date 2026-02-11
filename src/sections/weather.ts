@@ -162,7 +162,6 @@ Respond with just the advice, no preamble.`;
   const completion = await openAiClient.chat.completions.create({
     model: Z_AI_MODEL,
     messages: [{ role: "user", content: prompt }],
-    max_tokens: 120,
     stream: false,
   });
 
