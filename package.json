@@ -19,7 +19,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.74.0",
     "dotenv": "^17.2.4",
-    "grammy": "^1.40.0"
+    "grammy": "^1.40.0",
+    "openai": "^6.21.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
