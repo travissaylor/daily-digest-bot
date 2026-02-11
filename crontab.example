@@ -1,0 +1,16 @@
+# Daily Digest Bot - runs at 8:30 AM in the system's local timezone
+# Install: crontab -e, then paste the line below (adjust paths as needed)
+#
+# Prerequisites:
+#   - System timezone set correctly: sudo timedatectl set-timezone America/New_York
+#   - Node.js LTS installed (find path with: which node)
+#   - gogcli (gog) authenticated under the same user account
+#   - .env file configured in the project directory
+#
+# Notes:
+#   - The cd is required so dotenv can find the .env file in the project root
+#   - Use the absolute path to node (cron has a minimal PATH)
+#   - If using nvm, replace /usr/bin/node with your nvm node path,
+#     e.g. /home/pi/.nvm/versions/node/v22.x.x/bin/node
+#
+30 8 * * * cd /home/pi/daily-digest-bot && /usr/bin/node dist/index.js >> /home/pi/digest.log 2>&1
