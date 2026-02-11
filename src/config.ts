@@ -19,6 +19,7 @@ export function loadConfig({ dryRun = false } = {}): AppConfig {
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
     telegramChatId: process.env.TELEGRAM_CHAT_ID ?? "",
     zAiApiKey: process.env.Z_AI_API_KEY!,
+    zAiWebSearchApiKey: process.env.Z_AI_WEB_SEARCH_API_KEY, // Optional paid API key
     nwsLatitude: process.env.NWS_LATITUDE!,
     nwsLongitude: process.env.NWS_LONGITUDE!,
   };

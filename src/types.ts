@@ -27,6 +27,7 @@ export interface AppConfig {
   telegramBotToken: string;
   telegramChatId: string;
   zAiApiKey: string;
+  zAiWebSearchApiKey?: string; // Optional paid API key for web search
   nwsLatitude: string;
   nwsLongitude: string;
 }

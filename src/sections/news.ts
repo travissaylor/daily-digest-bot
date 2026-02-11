@@ -1,10 +1,9 @@
-import type OpenAI from "openai"
+import OpenAI from "openai"
 import type {
     AppConfig,
     SectionResult,
     ZAiWebSearchResult,
 } from "../types.js"
-import openAiClient from "../openai.js"
 
 // z.ai extends the standard ChatCompletion response with web search results
 interface ZAiChatCompletion extends OpenAI.Chat.Completions.ChatCompletion {
@@ -12,6 +11,9 @@ interface ZAiChatCompletion extends OpenAI.Chat.Completions.ChatCompletion {
 }
 
 const Z_AI_MODEL = "glm-4.7"
+
+// Paid API base URL that supports web search
+const Z_AI_PAID_BASE_URL = "https://api.z.ai/api/paas/v4"
 
 interface ParsedNewsItem {
     headline: string
@@ -48,8 +50,8 @@ function parseNewsContent(content: string): ParsedNewsItem[] {
             currentSummary = ""
             currentRef = ""
 
-            // Check if there's a [Source](ref_X) on the same line
-            const refMatch = trimmed.match(/\[Source\]\(ref_(\d+)\)/i)
+            // Check if there's a [Source: ref_X] on the same line
+            const refMatch = trimmed.match(/\[Source:\s*(ref_\d+)\]/i)
             if (refMatch) {
                 currentRef = refMatch[1]
             }
@@ -57,11 +59,11 @@ function parseNewsContent(content: string): ParsedNewsItem[] {
             continue
         }
 
-        // Match [Source](ref_X) pattern — may appear mid-line alongside summary text
-        const refMatch = trimmed.match(/\[Source\]\(ref_(\d+)\)/i)
+        // Match [Source: ref_X] pattern — may appear mid-line alongside summary text
+        const refMatch = trimmed.match(/\[Source:\s*(ref_\d+)\]/i)
         if (refMatch && currentHeadline) {
             currentRef = refMatch[1]
-            const summaryPart = trimmed.replace(/\s*\[Source\]\(ref_\d+\)/i, "").trim()
+            const summaryPart = trimmed.replace(/\s*\[Source:\s*ref_\d+\]/i, "").trim()
             if (summaryPart) {
                 currentSummary += (currentSummary ? " " : "") + summaryPart
             }
@@ -141,7 +143,7 @@ function mapRefsToLinks(
 
 // ── Main: Fetch AI news using z.ai web search ──────────────────────────────
 
-async function fetchAINewsFromAPI(): Promise<string> {
+async function fetchAINewsFromAPI(config: AppConfig): Promise<string> {
     const today = new Date().toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
@@ -153,15 +155,27 @@ async function fetchAINewsFromAPI(): Promise<string> {
 For each news item:
 1. Start with a bold headline using Markdown: **Headline Here**
 2. Write 2-3 sentences explaining what happened and why it matters
-3. End with [Source](ref_X) where X is the reference number
+3. End with [Source: ref_X] where X is the reference number
 
 Today's date is ${today}.
 
 Format example:
 **OpenAI Releases New SDK Version**
-The new SDK includes improved error handling and better performance for streaming responses. Developers can now use async patterns more easily. [Source](ref_1)`
+The new SDK includes improved error handling and better performance for streaming responses. Developers can now use async patterns more easily. [Source: ref_1]`
 
-    const completions = (await openAiClient.chat.completions.create({
+    // Use paid API client if web search API key is available, otherwise use free tier
+    const useWebSearch = !!config.zAiWebSearchApiKey
+    const client = useWebSearch
+        ? new OpenAI({
+              apiKey: config.zAiWebSearchApiKey,
+              baseURL: Z_AI_PAID_BASE_URL,
+          })
+        : new OpenAI({
+              apiKey: config.zAiApiKey,
+              baseURL: "https://api.z.ai/api/coding/paas/v4",
+          })
+
+    const completions = (await client.chat.completions.create({
         model: Z_AI_MODEL,
         messages: [{role: "system", content: "You are a helpful assistant."}, { role: "user", content: prompt }],
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -185,9 +199,9 @@ The new SDK includes improved error handling and better performance for streamin
 
 // ── Main export ─────────────────────────────────────────────────────────────
 
-export async function fetchAINews(_config: AppConfig): Promise<SectionResult> {
+export async function fetchAINews(config: AppConfig): Promise<SectionResult> {
     try {
-        const content = await fetchAINewsFromAPI()
+        const content = await fetchAINewsFromAPI(config)
         return {
             name: "AI News",
             content,
