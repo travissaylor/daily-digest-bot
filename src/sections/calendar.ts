@@ -1,5 +1,8 @@
 import { execSync } from "node:child_process";
 import type { AppConfig, CalendarEvent, SectionResult } from "../types.js";
+import openAiClient from "../openai.js";
+
+const Z_AI_MODEL = "glm-4.7";
 
 function parseEvents(json: string): CalendarEvent[] {
   const raw: unknown = JSON.parse(json);
@@ -67,6 +70,33 @@ function formatEvents(events: CalendarEvent[]): string {
   return lines.join("\n");
 }
 
+async function getCalendarSummary(events: CalendarEvent[]): Promise<string> {
+  const timed = events
+    .filter((e) => !e.isAllDay)
+    .sort((a, b) => a.startLocal.localeCompare(b.startLocal));
+
+  if (timed.length === 0) return "";
+
+  const schedule = timed
+    .map((e) => `${formatTime(e.startLocal)} – ${formatTime(e.endLocal)}: ${e.summary}`)
+    .join("\n");
+
+  const prompt = `Given this schedule for today, provide a 1-3 sentence overview of the day. Call out any overlapping events, short gaps between meetings (under 30 minutes), back-to-back meetings, and long blocks of free time. Be concise and practical.
+
+Schedule:
+${schedule}
+
+Respond with just the summary, no preamble.`;
+
+  const completion = await openAiClient.chat.completions.create({
+    model: Z_AI_MODEL,
+    messages: [{ role: "user", content: prompt }],
+    stream: false,
+  });
+
+  return completion.choices[0].message.content?.trim() ?? "";
+}
+
 export async function fetchCalendarEvents(
   _config: AppConfig,
 ): Promise<SectionResult> {
@@ -76,7 +106,16 @@ export async function fetchCalendarEvents(
   });
 
   const events = parseEvents(output);
-  const content = formatEvents(events);
+  let content = formatEvents(events);
+
+  try {
+    const summary = await getCalendarSummary(events);
+    if (summary) {
+      content += `\n\n📋 ${summary}`;
+    }
+  } catch (err) {
+    console.error("Calendar: summary generation failed:", err);
+  }
 
   return {
     name: "Calendar",
