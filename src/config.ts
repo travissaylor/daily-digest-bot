@@ -1,14 +1,11 @@
 import "dotenv/config";
 import type { AppConfig } from "./types.js";
 
-export function loadConfig(): AppConfig {
-  const required = [
-    "TELEGRAM_BOT_TOKEN",
-    "TELEGRAM_CHAT_ID",
-    "Z_AI_API_KEY",
-    "NWS_LATITUDE",
-    "NWS_LONGITUDE",
-  ] as const;
+export function loadConfig({ dryRun = false } = {}): AppConfig {
+  const required: string[] = ["Z_AI_API_KEY", "NWS_LATITUDE", "NWS_LONGITUDE"];
+  if (!dryRun) {
+    required.push("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID");
+  }
 
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length > 0) {
@@ -19,8 +16,8 @@ export function loadConfig(): AppConfig {
   }
 
   return {
-    telegramBotToken: process.env.TELEGRAM_BOT_TOKEN!,
-    telegramChatId: process.env.TELEGRAM_CHAT_ID!,
+    telegramBotToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
+    telegramChatId: process.env.TELEGRAM_CHAT_ID ?? "",
     zAiApiKey: process.env.Z_AI_API_KEY!,
     nwsLatitude: process.env.NWS_LATITUDE!,
     nwsLongitude: process.env.NWS_LONGITUDE!,

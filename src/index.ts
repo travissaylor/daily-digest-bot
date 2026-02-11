@@ -10,9 +10,11 @@ import { formatDigest, sendTelegramMessage } from "./telegram.js";
 
 async function main(): Promise<void> {
   const startTime = Date.now();
+  const dryRun = process.argv.includes("--dry-run");
+
   console.log(`[${new Date().toISOString()}] Starting daily digest...`);
 
-  const config = loadConfig();
+  const config = loadConfig({ dryRun });
 
   const sections = await Promise.allSettled([
     fetchCalendarEvents(config),
@@ -23,7 +25,12 @@ async function main(): Promise<void> {
   ]);
 
   const digest = formatDigest(sections);
-  await sendTelegramMessage(config, digest);
+
+  if (dryRun) {
+    console.log(digest);
+  } else {
+    await sendTelegramMessage(config, digest);
+  }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   console.log(`[${new Date().toISOString()}] Daily digest complete in ${elapsed}s.`);

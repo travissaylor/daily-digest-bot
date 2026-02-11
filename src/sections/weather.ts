@@ -1,10 +1,10 @@
 import { execSync } from "node:child_process";
 import type { AppConfig, SectionResult, WeatherData } from "../types.js";
+import openAiClient from "../openai.js";
 
 const NWS_BASE = "https://api.weather.gov";
 const NWS_USER_AGENT = "daily-digest-bot (personal use)";
-const Z_AI_ENDPOINT = "https://api.z.ai/api/paas/v4/chat/completions";
-const Z_AI_MODEL = "glm-4.7-flash";
+const Z_AI_MODEL = "glm-4.7";
 
 // ── NWS helpers ─────────────────────────────────────────────────────────────
 
@@ -130,14 +130,9 @@ function getCalendarContext(): string {
 
 // ── z.ai clothing guidance ───────────────────────────────────────────────────
 
-interface ZAiResponse {
-  choices: Array<{ message: { content: string } }>;
-}
-
 async function getClothingGuidance(
   weather: WeatherData,
-  calendarContext: string,
-  apiKey: string
+  calendarContext: string
 ): Promise<string> {
   const precipLine =
     weather.precipChancePct > 0 && weather.precipType
@@ -164,27 +159,14 @@ Weather: ${weatherSummary}${calendarLine}
 
 Respond with just the advice, no preamble.`;
 
-  const res = await fetch(Z_AI_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey.trim()}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: Z_AI_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 120,
-      stream: false,
-    }),
+  const completion = await openAiClient.chat.completions.create({
+    model: Z_AI_MODEL,
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: 120,
+    stream: false,
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`z.ai API error ${res.status}: ${body}`);
-  }
-
-  const data = (await res.json()) as ZAiResponse;
-  return data.choices[0].message.content.trim();
+  return completion.choices[0].message.content?.trim() ?? "";
 }
 
 // ── Formatting ───────────────────────────────────────────────────────────────
@@ -222,7 +204,7 @@ export async function fetchWeather(config: AppConfig): Promise<SectionResult> {
 
   let guidance: string;
   try {
-    guidance = await getClothingGuidance(weather, calendarContext, config.zAiApiKey);
+    guidance = await getClothingGuidance(weather, calendarContext);
   } catch (err) {
     console.error("Weather: clothing guidance failed:", err);
     guidance = "⚠️ Clothing guidance unavailable";
